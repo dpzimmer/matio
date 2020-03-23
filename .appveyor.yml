@@ -12,6 +12,9 @@ platform:
 
 environment:
   matrix:
+    - compiler: MSVC
+      configuration: Release
+      build_with: cmake
     - compiler: Cygwin
       configuration: Release
       build_with: autoconf
@@ -30,13 +33,17 @@ matrix:
     - compiler: Cygwin
       build_with: msbuild
     - compiler: Cygwin
+      build_with: cmake
+    - compiler: Cygwin
       configuration: Release Lib
     - compiler: MinGW
       build_with: msbuild
     - compiler: MinGW
+      build_with: cmake
+    - compiler: MinGW
       configuration: Release Lib
     - compiler: MSVC
-      configuration: autoconf
+      build_with: autoconf
 
 for:
 -
@@ -44,7 +51,7 @@ for:
     only:
       - compiler: MSVC
 
-  before_build:
+  install:
     - ps: >-
         If ($env:Platform -Match "Win32") {
           $env:HDF5_DIR="C:\projects\HDF5-1.8.13-win32"
@@ -73,9 +80,10 @@ for:
     - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /Release /%sdk_platform_env%
     - ps: $env:configuration=$env:CONFIGURATION_OLD
 
-  build:
-    project: visual_studio/matio.sln
-    verbosity: normal
+  build_script:
+    - if "%build_with%"=="msbuild" msbuild visual_studio\matio.sln /verbosity:normal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+    - if "%build_with%"=="cmake" if "%platform%"=="Win32" cmake -G "Visual Studio 10 2010" .\ -DCMAKE_PREFIX_PATH=%HDF5_DIR%\cmake -DZLIB_LIBRARY=%HDF5_DIR%\lib\zlib.lib -DZLIB_INCLUDE_DIR=%HDF5_DIR%\include -DHDF5_DIR=%HDF5_DIR%
+    - if "%build_with%"=="cmake" if "%platform%"=="x64" cmake -G "Visual Studio 10 2010 Win64" .\ -DCMAKE_PREFIX_PATH=%HDF5_DIR%\cmake -DZLIB_LIBRARY=%HDF5_DIR%\lib\zlib.lib -DZLIB_INCLUDE_DIR=%HDF5_DIR%\include -DHDF5_DIR=%HDF5_DIR%
 
 -
   matrix:
